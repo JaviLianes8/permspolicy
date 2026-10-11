@@ -8,4 +8,7 @@ All notable changes to this project are documented here. The format follows
 
 ## [0.1.0]
 
-- First release.
+- `parse` reads a Permissions-Policy header into `{feature: allowlist}`, handling `*`, `()`,
+  the `self` token and quoted origins, and tolerating malformed members.
+- `build` serializes a mapping back into a header with correct quoting and validation.
+- `PermissionsPolicyError` for invalid feature names and misplaced `*`.
