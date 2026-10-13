@@ -2,13 +2,13 @@
 
 Progress:
 - [x] Brainstorm ranked improvements (this file)
-- [ ] Pin the ground truth: Permissions Policy spec, features registry, CSP source grammar, RFC 9651, structured field test corpus
-- [ ] Structured field dictionary parser and serializer on RFC 9651, checked against the corpus
-- [ ] Header parsing on the whole field: failure ignores the header, strict mode raises
-- [ ] Typed model: Allowlist and Policy, report-to, origin matching
-- [ ] Safe builder that cannot inject
-- [ ] iframe allow attribute and legacy Feature-Policy: parse, build, convert
-- [ ] Features registry
+- [x] Pin the ground truth: Permissions Policy spec, features registry, CSP source grammar, RFC 9651, structured field test corpus
+- [x] Structured field dictionary parser and serializer on RFC 9651, checked against the corpus
+- [x] Header parsing on the whole field: failure ignores the header, strict mode raises
+- [x] Typed model: Allowlist and Policy, report-to, origin matching
+- [x] Safe builder that cannot inject
+- [x] iframe allow attribute and legacy Feature-Policy: parse, build, convert
+- [x] Features registry
 - [ ] Command line
 - [ ] Contracts: pinned sources, README examples, typing, installed wheel
 - [ ] Docs and packaging: README, CHANGELOG, metadata, sdist contents
