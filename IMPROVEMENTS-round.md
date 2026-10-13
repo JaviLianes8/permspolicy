@@ -9,9 +9,9 @@ Progress:
 - [x] Safe builder that cannot inject
 - [x] iframe allow attribute and legacy Feature-Policy: parse, build, convert
 - [x] Features registry
-- [ ] Command line
+- [x] Command line
 - [ ] Contracts: pinned sources, README examples, typing, installed wheel
-- [ ] Docs and packaging: README, CHANGELOG, metadata, sdist contents
+- [x] Docs and packaging: README, CHANGELOG, metadata, sdist contents
 - [ ] Gates: ruff format, ruff check, mypy --strict, pytest
 - [ ] Mutation run: removing guarded logic makes the suite fail
 - [ ] Independent review findings fixed with regression tests

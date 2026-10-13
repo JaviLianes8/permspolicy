@@ -30,6 +30,8 @@ from permspolicy import Allowlist, is_source_expression, serialize_origin
         ("blob:https://a.example/uuid", "https://a.example"),
         ("https://a.example:0", "https://a.example:0"),
         ("https://a.example:65535", "https://a.example:65535"),
+        ("https://a.0xg", "https://a.0xg"),
+        ("https://A.0X7G", "https://a.0x7g"),
     ],
 )
 def test_origins_of_urls(url: str, origin: str) -> None:
@@ -56,6 +58,9 @@ def test_origins_of_urls(url: str, origin: str) -> None:
         "https://a%41.example",
         "https://a b.example",
         "https://0x7f.1",
+        "https://a.0x",
+        "https://a.0XFF",
+        "https://a.12",
         "https://127.1",
         "https://1.2.3.256",
         "https://01.2.3.4",

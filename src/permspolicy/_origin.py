@@ -31,6 +31,13 @@ def ascii_lower(text: str) -> str:
     return text.translate(_LOWER)
 
 
+def _ends_in_number(last: str) -> bool:
+    # WHATWG URL "ends in a number": all digits, or 0x followed by hex digits (maybe none).
+    if last.isdigit():
+        return True
+    return last.startswith("0x") and all(char in "0123456789abcdef" for char in last[2:])
+
+
 def _host(text: str) -> str | None:
     if not text or not text.isascii() or any(char in _FORBIDDEN for char in text):
         # Non-ASCII hosts need IDNA processing and IPv6 literals hold brackets; neither is
@@ -39,7 +46,7 @@ def _host(text: str) -> str | None:
     host = ascii_lower(text)
     labels = host.split(".")
     last = labels[-2] if labels[-1] == "" and len(labels) > 1 else labels[-1]
-    if last and (last.isdigit() or last.startswith("0x")):
+    if _ends_in_number(last):
         # A host ending in a number is an IPv4 address. Only the dotted decimal form is
         # accepted; the WHATWG short and hex forms are refused, not normalized.
         parts = host.split(".")
