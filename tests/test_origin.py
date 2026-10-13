@@ -170,3 +170,11 @@ def test_self_and_src_match_only_when_included_and_given() -> None:
 def test_the_wildcard_allows_even_an_opaque_origin() -> None:
     assert Allowlist.everyone().allows("null")
     assert not Allowlist.of("self", "https:").allows("null", self_origin="null")
+
+
+@pytest.mark.parametrize("bad", [None, b"https://a.example", 1])
+def test_a_url_that_is_not_a_string_raises_type_error(bad: object) -> None:
+    with pytest.raises(TypeError):
+        serialize_origin(bad)  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        Allowlist.of("https:").allows(bad)  # type: ignore[arg-type]

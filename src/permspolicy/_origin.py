@@ -57,6 +57,8 @@ def _host(text: str) -> str | None:
 
 def parse_origin(url: str) -> Origin | None:
     """Return the tuple origin of ``url``, or None when it fails or the origin is opaque."""
+    if not isinstance(url, str):
+        raise TypeError(f"a URL is a str, got {type(url).__name__}")
     text = url.strip(_C0_OR_SPACE).replace("\t", "").replace("\n", "").replace("\r", "")
     scheme, colon, rest = text.partition(":")
     if not colon or not _SCHEME.fullmatch(scheme):
