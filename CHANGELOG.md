@@ -12,7 +12,8 @@ All notable changes to this project are documented here. The format follows
 
 - `parse` reads the field as an RFC 9651 Dictionary. A value that does not parse is ignored
   as a whole (an empty `Policy`), as browsers do; before, the readable part was kept.
-  Inside a valid value, items and members the spec ignores are dropped.
+  Inside a valid value, inner list items the spec ignores are dropped, and a member of any
+  other form declares the feature with an empty allowlist, as the spec algorithm does.
 - `parse` returns a `Policy` (a read-only mapping of feature to `Allowlist`) instead of a
   dict of string lists. `Allowlist.entries()` gives the old list form.
 - `build` accepts only `*`, `self` and source expressions, lower-case feature names and
