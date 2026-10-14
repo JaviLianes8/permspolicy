@@ -1,27 +1,40 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
 name = "permspolicy"
-version = "0.1.0"
-description = "Parse and build the HTTP Permissions-Policy header with a typed, zero-dependency API"
+version = "0.2.0"
+description = "Parse, build and check Permissions-Policy headers and iframe allow attributes, typed and zero-dependency"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Javier Lianes", email = "javier@lianes8studio.com" }]
-keywords = []
+keywords = ["permissions-policy", "feature-policy", "http", "headers", "security", "iframe", "allow", "structured-fields", "rfc9651"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Security",
     "Typing :: Typed",
 ]
 dependencies = []
 
 [project.optional-dependencies]
 dev = ["ruff", "mypy", "pytest", "build", "twine"]
+
+[project.scripts]
+permspolicy = "permspolicy._cli:main"
 
 [project.urls]
 Homepage = "https://lianes8studio.com"
@@ -33,6 +46,18 @@ Funding = "https://buymeacoffee.com/jlianesglrs"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/permspolicy"]
+
+[tool.hatch.build.targets.sdist]
+# Third-party reference files are fetched locally and never shipped; only their manifest is.
+exclude = [
+    ".github",
+    "scratchpad",
+    "IMPROVEMENTS-round*.md",
+    "tests/upstream/*.txt",
+    "tests/upstream/*.bs",
+    "tests/upstream/*.md",
+    "tests/upstream/sf",
+]
 
 [tool.ruff]
 line-length = 100
