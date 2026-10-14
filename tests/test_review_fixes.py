@@ -53,6 +53,7 @@ def test_repeated_entries_cost_linear_time() -> None:
         ("http://xn--a.example", None),
         ("http://xn--zz.example", None),
         ("http://xn--.example", None),
+        ("http://xn--ab-.example", None),
         ("http://xn--tdaaaaaa.de", "http://xn--tdaaaaaa.de"),
         ("https://a.0bc", "https://a.0bc"),
         ("https://u@v@c.example", "https://c.example"),

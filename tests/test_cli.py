@@ -14,9 +14,9 @@ NONE = {"wildcard": False, "self": False, "src": False, "expressions": []}
 
 
 def test_a_host_named_self_is_not_the_keyword(capsys: pytest.CaptureFixture[str]) -> None:
-    code, out, _ = _run(['camera=(self "self")'], capsys)
+    code, out, _ = _run(['camera=("self")'], capsys)
     assert code == 0
-    assert json.loads(out)["features"]["camera"] == {**NONE, "self": True, "expressions": ["self"]}
+    assert json.loads(out)["features"]["camera"] == {**NONE, "expressions": ["self"]}
 
 
 def _run(

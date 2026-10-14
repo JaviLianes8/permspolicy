@@ -10,11 +10,11 @@ Progress:
 - [x] iframe allow attribute and legacy Feature-Policy: parse, build, convert
 - [x] Features registry
 - [x] Command line
-- [ ] Contracts: pinned sources, README examples, typing, installed wheel
+- [x] Contracts: pinned sources, README examples, typing, installed wheel
 - [x] Docs and packaging: README, CHANGELOG, metadata, sdist contents
-- [ ] Gates: ruff format, ruff check, mypy --strict, pytest
-- [ ] Mutation run: removing guarded logic makes the suite fail
-- [ ] Independent review findings fixed with regression tests
+- [x] Gates: ruff format, ruff check, mypy --strict, pytest
+- [x] Mutation run: removing guarded logic makes the suite fail
+- [x] Independent review findings fixed with regression tests
 - [ ] Pull request opened, guard clean
 
 ## Starting point
@@ -92,3 +92,46 @@ hand and keeps whatever it can read; `build` quotes every entry. Probed:
   forms and non-ASCII hosts are refused instead of normalized.
 - Inheritance through frames and default allowlists: they need browsing context state.
 - Document Policy, a separate header with a different model.
+
+## Decisions
+
+- A member whose value is not `*`, `self`, a String or an Inner List declares the feature
+  with an empty allowlist, as the "Construct policy from dictionary and origin" algorithm
+  does; the prose next to the grammar says such a member is ignored. Following the
+  algorithm is also the safer reading: the feature ends up disabled, not at its default.
+- A bare String holding a source expression is read as a one-entry allowlist: the prose
+  lists it as a valid value, while the algorithm only reads Inner Lists.
+- The command line prints the allowlist as separate fields, because a host named `self`,
+  `src` or `*` is a valid source expression and would print like the keyword.
+
+## Verification
+
+- Gates on CPython 3.14 on a fresh clone of the branch with the reference files fetched by
+  `scripts/fetch_upstream.py` (every file matched the manifest): `ruff format --check .`,
+  `ruff check .`, `mypy --strict src` (and `src tests`) and `pytest`. With
+  `PERMSPOLICY_E2E=1` the wheel and sdist are built, their contents checked (no planning
+  notes, no fetched files, manifest, fetch script and entry point present), the wheel is
+  installed in a fresh venv and the API, the `permspolicy` script and
+  `python -m permspolicy` are driven from an empty folder.
+- Mutation: guarded logic changed one piece at a time, no bytecode written, `__pycache__`
+  purged before each run, 180 s limit per mutant, baseline green before and after. First
+  run: 152 mutants, 22 alive. Tests were added for the String `*` and `self` read as
+  hosts, a src-only allowlist, `0`-prefixed hosts that are not numbers, userinfo with
+  two `@`, huge ports in URLs and expressions, upper-case schemes and hosts in
+  expressions, port and default-port matching, deep paths, non-ASCII whitespace in the
+  attribute, the last repeated parameter and the String writer; two checks proved
+  redundant and were removed (a scheme pattern in front of the scheme allowlist, a key type
+  check behind the Policy one). Second run after the review fixes: 157 mutants, 7 alive;
+  the two that were real (an ASCII-only punycode label, a host named `self` in the JSON)
+  now fail their tests. Five are equivalent: joining field lines with `,` instead of
+  `, ` (optional whitespace), a port length limit of 6 instead of 5 digits (the range check
+  still refuses), the path length guard (with the path `/` a longer pattern already
+  differs in its second piece), accepting `,` after an inner list item (the next item
+  fails), and the ASCII check of the dictionary parser (any non-ASCII character fails a
+  later rule).
+- Seeded random round trips: 3000 headers and 2000 attribute and legacy values are built
+  and read back strictly; 5000 random strings go through every parser without an
+  undocumented exception.
+- Independent review: nine findings, all fixed with regression tests in
+  `tests/test_review_fixes.py` except two notes kept as they are (`requires-python`
+  stays 3.10 as on main, the 0.2.0 changelog section is dated at release).
