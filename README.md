@@ -99,13 +99,17 @@ $ permspolicy 'geolocation=(self), camera=()' --origin https://a.example --self-
 {
   "features": {
     "geolocation": {
-      "allowlist": [
-        "self"
-      ],
+      "wildcard": false,
+      "self": true,
+      "src": false,
+      "expressions": [],
       "allows_origin": true
     },
     "camera": {
-      "allowlist": [],
+      "wildcard": false,
+      "self": false,
+      "src": false,
+      "expressions": [],
       "allows_origin": false
     }
   },
@@ -141,7 +145,11 @@ spec would ignore, and `--check` exits 1 when a feature name is not in the featu
 
 - Origins are computed for http, https, ws, wss and ftp (and `blob:` URLs over http or
   https). Other schemes have opaque origins and are dropped, as browsers drop them.
-  Non-ASCII hosts, IPv6 literals and short IPv4 forms are refused rather than normalized.
+  Non-ASCII hosts, percent-encoded hosts, IPv6 literals, short IPv4 forms and `xn--`
+  labels that do not decode to letters and digits are refused rather than normalized.
+- A member whose value is neither `*`, `self`, a String nor an Inner List is declared with
+  an empty allowlist, as the spec algorithm does, so the feature is disabled. A bare String
+  holding a source expression is read as a one-entry allowlist, as the spec prose allows.
 - Feature names are not filtered when parsing: a browser ignores names it does not know,
   and which names it knows depends on the browser. `Policy.unknown()` lists them.
 - Inheritance through frames and the default allowlist of each feature need a browsing

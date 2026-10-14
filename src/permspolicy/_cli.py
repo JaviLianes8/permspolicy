@@ -18,7 +18,13 @@ EXIT_INVALID = 1
 def _report(policy: Policy, args: argparse.Namespace) -> dict[str, object]:
     features: dict[str, object] = {}
     for name, allowlist in policy.items():
-        entry: dict[str, object] = {"allowlist": list(allowlist.entries())}
+        # Separate fields, so a host named "self" cannot be read as the keyword.
+        entry: dict[str, object] = {
+            "wildcard": allowlist.wildcard,
+            "self": allowlist.includes_self,
+            "src": allowlist.includes_src,
+            "expressions": list(allowlist.expressions),
+        }
         if name in policy.report_to:
             entry["report_to"] = policy.report_to[name]
         if args.origin is not None:

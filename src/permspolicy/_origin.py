@@ -6,7 +6,6 @@ import re
 from typing import NamedTuple
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
-_SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.\-]*")
 # WHATWG URL: forbidden domain code points (C0 controls, space, DEL and these delimiters).
 _FORBIDDEN = frozenset("#%/:<>?@[\\]^|") | {chr(code) for code in range(0x21)} | {"\x7f"}
 _DECIMAL = re.compile(r"0|[1-9][0-9]{0,2}")
@@ -38,6 +37,18 @@ def _ends_in_number(last: str) -> bool:
     return last.startswith("0x") and all(char in "0123456789abcdef" for char in last[2:])
 
 
+def _punycode_ok(label: str) -> bool:
+    # A browser rejects an xn-- label that does not decode to a valid non-ASCII label;
+    # this keeps the ones that decode to letters and digits and refuses the rest.
+    try:
+        decoded = label[4:].encode("ascii").decode("punycode")
+    except (UnicodeError, ValueError):
+        return False
+    if not decoded or decoded.isascii():
+        return False
+    return all(char.isalnum() or char == "-" for char in decoded)
+
+
 def _host(text: str) -> str | None:
     if not text or not text.isascii() or any(char in _FORBIDDEN for char in text):
         # Non-ASCII hosts need IDNA processing and IPv6 literals hold brackets; neither is
@@ -45,6 +56,8 @@ def _host(text: str) -> str | None:
         return None
     host = ascii_lower(text)
     labels = host.split(".")
+    if not all(_punycode_ok(label) for label in labels if label.startswith("xn--")):
+        return None
     last = labels[-2] if labels[-1] == "" and len(labels) > 1 else labels[-1]
     if _ends_in_number(last):
         # A host ending in a number is an IPv4 address. Only the dotted decimal form is
@@ -61,12 +74,15 @@ def parse_origin(url: str) -> Origin | None:
         raise TypeError(f"a URL is a str, got {type(url).__name__}")
     text = url.strip(_C0_OR_SPACE).replace("\t", "").replace("\n", "").replace("\r", "")
     scheme, colon, rest = text.partition(":")
-    if not colon or not _SCHEME.fullmatch(scheme):
-        return None
     scheme = ascii_lower(scheme)
+    if not colon:
+        return None
     if scheme == "blob":
-        inner = parse_origin(rest)
+        # The URL Standard takes the inner origin only when the inner scheme is http(s);
+        # a nested blob: URL has an opaque origin.
+        inner = None if ascii_lower(rest).startswith("blob:") else parse_origin(rest)
         return inner if inner is not None and inner.scheme in ("http", "https") else None
+    # Only these schemes have tuple origins; any other text before the colon fails here.
     if scheme not in DEFAULT_PORTS:
         return None
     rest = rest.lstrip("/\\")

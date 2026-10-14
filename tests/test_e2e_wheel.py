@@ -110,7 +110,8 @@ def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
         shown = _run(*command, "--origin", "https://a.example", cwd=work, stdin=b"camera=*\n")
         assert shown.returncode == 0, shown.stderr
         report = json.loads(shown.stdout)
-        assert report["features"]["camera"] == {"allowlist": ["*"], "allows_origin": True}
+        camera = report["features"]["camera"]
+        assert camera["wildcard"] is True and camera["allows_origin"] is True
     converted = _run(script, "--feature-policy", "--to-header", "camera 'self'", cwd=work)
     assert converted.returncode == 0 and converted.stdout.decode().strip() == "camera=(self)"
     failed = _run(script, "--strict", "camera=(self", cwd=work)

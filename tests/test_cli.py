@@ -10,6 +10,14 @@ import pytest
 
 from permspolicy._cli import main
 
+NONE = {"wildcard": False, "self": False, "src": False, "expressions": []}
+
+
+def test_a_host_named_self_is_not_the_keyword(capsys: pytest.CaptureFixture[str]) -> None:
+    code, out, _ = _run(['camera=(self "self")'], capsys)
+    assert code == 0
+    assert json.loads(out)["features"]["camera"] == {**NONE, "self": True, "expressions": ["self"]}
+
 
 def _run(
     args: list[str], capsys: pytest.CaptureFixture[str], stdin: bytes | None = None
@@ -31,8 +39,8 @@ def test_the_report_lists_allowlists_endpoints_and_unknown_names(
     assert code == 0
     assert json.loads(out) == {
         "features": {
-            "camera": {"allowlist": [], "report_to": "e"},
-            "madeup": {"allowlist": ["*"]},
+            "camera": {**NONE, "report_to": "e"},
+            "madeup": {**NONE, "wildcard": True},
         },
         "unknown": ["madeup"],
     }

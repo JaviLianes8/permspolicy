@@ -26,6 +26,8 @@ def _line(value: object) -> str:
 def _join(header: object) -> str:
     if isinstance(header, (str, bytes, bytearray)):
         return _line(header)
+    if isinstance(header, Mapping):
+        raise TypeError("a header is str, bytes or field lines, got a mapping")
     if isinstance(header, Iterable):
         # RFC 9651 section 4.2: field lines are combined with a comma before parsing.
         return ", ".join(_line(line) for line in header)
@@ -38,7 +40,7 @@ def _is_string(item: object) -> bool:
 
 def _allowlist(
     name: str, value: BareItem | list[tuple[BareItem, Params]], strict: bool
-) -> Allowlist | None:
+) -> Allowlist:
     if isinstance(value, Token) and value == "*":
         return Allowlist.everyone()
     if isinstance(value, Token) and value == "self":
@@ -48,18 +50,19 @@ def _allowlist(
     if not isinstance(value, list):
         if strict:
             raise PermissionsPolicyError(f"{name}: {value!r} is not an allowlist")
-        return None  # the spec ignores a member of any other form
+        # "Construct policy from dictionary and origin" still declares the feature with an
+        # empty allowlist: a value of any other form disables it rather than being skipped.
+        return Allowlist()
     items = [item for item, _ in value]
     if any(isinstance(item, Token) and item == "*" for item in items):
         return Allowlist.everyone()
     found_self = False
-    expressions: list[str] = []
+    expressions: dict[str, None] = {}  # an ordered set, so repeats cost nothing
     for item in items:
         if isinstance(item, Token) and item == "self":
             found_self = True
         elif _is_string(item) and is_source_expression(item):
-            if item not in expressions:
-                expressions.append(str(item))
+            expressions[str(item)] = None
         elif strict:
             raise PermissionsPolicyError(f"{name}: {item!r} is not an allowlist entry")
     return Allowlist(includes_self=found_self, expressions=tuple(expressions))
@@ -70,9 +73,12 @@ def parse(header: FieldValue, *, strict: bool = False) -> Policy:
 
     ``header`` is the value as str or bytes, or a sequence of field lines, which are
     joined with a comma. A value that is not a valid structured field Dictionary is
-    ignored as a whole and gives an empty Policy, as browsers do; within a valid
-    Dictionary, entries the spec ignores are dropped. With ``strict=True`` both cases
-    raise :class:`PermissionsPolicyError` instead, with ``offset`` set for syntax errors.
+    ignored as a whole and gives an empty Policy, as browsers do. Within a valid
+    Dictionary, inner list items the spec ignores are dropped, and a member whose value
+    is not ``*``, ``self``, a String source expression or an Inner List declares the
+    feature with an empty allowlist, as "Construct policy from dictionary and origin"
+    does. With ``strict=True`` both cases raise :class:`PermissionsPolicyError` instead,
+    with ``offset`` set for syntax errors.
     Feature names are not filtered: see :meth:`Policy.unknown`.
     """
     text = _join(header)
@@ -85,10 +91,7 @@ def parse(header: FieldValue, *, strict: bool = False) -> Policy:
     features: dict[str, Allowlist] = {}
     report_to: dict[str, str] = {}
     for name, (value, params) in members.items():
-        allowlist = _allowlist(name, value, strict)
-        if allowlist is None:
-            continue
-        features[name] = allowlist
+        features[name] = _allowlist(name, value, strict)
         endpoint = params.get("report-to")
         if isinstance(endpoint, Token):
             report_to[name] = str(endpoint)

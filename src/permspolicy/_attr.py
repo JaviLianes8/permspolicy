@@ -31,7 +31,7 @@ def _directive(value: str, *, attribute: bool, strict: bool) -> Policy:
             directive[name] = Allowlist.everyone()
             continue
         has_self, has_src = False, attribute and not targetlist
-        origins: list[str] = []
+        origins: dict[str, None] = {}  # an ordered set, so repeats cost nothing
         for element in targetlist:
             keyword = ascii_lower(element)
             if keyword == "'self'":
@@ -41,8 +41,7 @@ def _directive(value: str, *, attribute: bool, strict: bool) -> Policy:
             else:
                 origin = serialize_origin(element)
                 if origin is not None and is_source_expression(origin):
-                    if origin not in origins:
-                        origins.append(origin)
+                    origins[origin] = None
                 elif strict and keyword != _NONE:
                     raise PermissionsPolicyError(f"{name}: {element!r} is not an origin")
         directive[name] = Allowlist(False, has_self, has_src, tuple(origins))

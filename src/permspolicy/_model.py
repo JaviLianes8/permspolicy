@@ -31,7 +31,9 @@ class Allowlist:
         flags = (self.wildcard, self.includes_self, self.includes_src)
         if any(not isinstance(flag, bool) for flag in flags):
             raise TypeError("wildcard, includes_self and includes_src are bool")
-        if not isinstance(self.expressions, tuple):
+        if not isinstance(self.expressions, tuple) or not all(
+            isinstance(expression, str) for expression in self.expressions
+        ):
             raise TypeError("expressions is a tuple of str")
         for expression in self.expressions:
             if not is_source_expression(expression):
@@ -59,7 +61,7 @@ class Allowlist:
         and quoted keywords such as ``"'self'"`` are refused (write ``"self"``).
         """
         flags = {"*": False, "self": False, "src": False}
-        expressions: list[str] = []
+        expressions: dict[str, None] = {}  # an ordered set, so repeats cost nothing
         for entry in entries:
             if not isinstance(entry, str):
                 raise TypeError(f"an allowlist entry is a str, got {entry!r}")
@@ -67,8 +69,8 @@ class Allowlist:
                 flags[entry] = True
             elif not is_source_expression(entry):
                 raise PermissionsPolicyError(f"{entry!r} is not '*', 'self', 'src' or a source")
-            elif entry not in expressions:
-                expressions.append(entry)
+            else:
+                expressions[entry] = None
         return cls(flags["*"], flags["self"], flags["src"], tuple(expressions))
 
     @property
@@ -77,7 +79,11 @@ class Allowlist:
         return not (self.wildcard or self.includes_self or self.includes_src or self.expressions)
 
     def entries(self) -> tuple[str, ...]:
-        """The allowlist as plain entries, the form :meth:`of` reads back."""
+        """The allowlist as plain entries: ``"*"``, ``"self"``, ``"src"``, then expressions.
+
+        A display form. A host literally named ``self``, ``src`` or ``*`` (a valid source
+        expression) prints like the keyword, so use the fields to tell them apart.
+        """
         if self.wildcard:
             return ("*",)
         keywords = ("self",) * self.includes_self + ("src",) * self.includes_src
@@ -93,9 +99,9 @@ class Allowlist:
         allowlist includes it. An origin that is opaque or does not parse never matches,
         except through ``*``.
         """
+        target = parse_origin(origin)
         if self.wildcard:
             return True
-        target = parse_origin(origin)
         if target is None:
             return False
         if self.includes_self and self_origin is not None and parse_origin(self_origin) == target:
@@ -133,6 +139,8 @@ class Policy(Mapping[str, Allowlist]):
         features: Mapping[str, AllowlistLike] | None = None,
         report_to: Mapping[str, str] | None = None,
     ) -> None:
+        if features is not None and not isinstance(features, Mapping):
+            raise TypeError(f"features is a mapping, got {type(features).__name__}")
         checked: dict[str, Allowlist] = {}
         for name, value in (features or {}).items():
             if not isinstance(name, str):

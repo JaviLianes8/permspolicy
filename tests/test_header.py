@@ -30,12 +30,13 @@ def test_a_bare_string_holding_a_source_expression() -> None:
 
 
 @pytest.mark.parametrize("value", ['"not a source"', "1", "?1", "other", ":AA==:", "@1", '%"x"'])
-def test_a_member_of_any_other_form_is_ignored(value: str) -> None:
-    assert parse(f"a=(), b={value}") == Policy({"a": []})
+def test_a_member_of_any_other_form_is_declared_disabled(value: str) -> None:
+    policy = parse(f"a=*, b={value};report-to=r")
+    assert policy == Policy({"a": "*", "b": []}, report_to={"b": "r"})
 
 
-def test_a_member_without_a_value_is_ignored() -> None:
-    assert list(parse("geolocation, camera=()")) == ["camera"]
+def test_a_member_without_a_value_is_declared_disabled() -> None:
+    assert parse("geolocation, camera=*") == Policy({"geolocation": [], "camera": "*"})
 
 
 def test_invalid_items_inside_a_list_are_dropped() -> None:

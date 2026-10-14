@@ -6,10 +6,8 @@ from ._errors import PermissionsPolicyError
 from ._sf import ALPHA, KEY_CHARS, LCALPHA, TOKEN_CHARS
 
 
-def serialize_key(key: object) -> str:
+def serialize_key(key: str) -> str:
     """Return ``key`` when it is a valid Dictionary or Parameter key."""
-    if not isinstance(key, str):
-        raise TypeError(f"a feature name is a str, got {key!r}")
     if not key or (key[0] not in LCALPHA and key[0] != "*"):
         raise PermissionsPolicyError(f"{key!r} is not a structured field key")
     if any(char not in KEY_CHARS for char in key):

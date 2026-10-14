@@ -95,6 +95,8 @@ def source_matches(text: str, origin: Origin) -> bool:
     The Permissions Policy "matches" algorithm passes the candidate origin as both the
     URL (its serialization, whose path is "/") and the origin, with a redirect count of 0.
     """
+    if text == "*":
+        return True  # CSP3 step 1: the URL is the origin itself, so its scheme always fits
     source = parse_source(text)
     if source is None:
         return False
